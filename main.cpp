@@ -82,6 +82,7 @@ ATOM RegisterWC(const wchar_t* className)
   wc.hCursor = LoadCursor(GetModuleHandle(nullptr), IDC_ARROW);
   wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
   wc.lpszClassName = className;
+  wc.style = CS_VREDRAW | CS_HREDRAW;
 
   return RegisterClass(&wc);
 }

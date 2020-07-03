@@ -12,10 +12,14 @@ LRESULT CALLBACK WindowProc(
   static int cyChar;
   static int cxClient;
   static int cyClient;
+  static int vScrollPos = 0;
 
   switch(msg)
   {
   case WM_CREATE:
+    SetScrollRange(hwnd, SB_VERT, 0, NUMLINES - 1, FALSE);
+    SetScrollPos(hwnd, SB_VERT, vScrollPos, TRUE);
+    return 0;
     break;
 
   case WM_SIZE:
@@ -23,7 +27,41 @@ LRESULT CALLBACK WindowProc(
     cyClient = HIWORD(lparam);
     break;
 
-  case WM_CTLCOLORSTATIC:
+  case WM_VSCROLL:
+    switch(LOWORD(wparam))
+    {
+      case SB_LINEUP:
+        vScrollPos -= 1;
+        break;
+
+      case SB_LINEDOWN:
+        vScrollPos += 1;
+        break;
+
+      case SB_PAGEUP:
+        vScrollPos -= cyClient / cyChar;
+        break;
+
+      case SB_PAGEDOWN:
+        vScrollPos += cyClient / cyChar;
+        break;
+
+      case SB_THUMBPOSITION:
+        vScrollPos = HIWORD(wparam);
+        break;
+
+      default:
+        break;
+    }
+
+    vScrollPos = max(0, min(vScrollPos, NUMLINES -1));
+    if(vScrollPos != GetScrollPos(hwnd, SB_VERT))
+    {
+      SetScrollPos(hwnd, SB_VERT, vScrollPos, TRUE);
+      InvalidateRect(hwnd, nullptr, TRUE);
+    }
+
+    return 0;
     break;
 
   case WM_PAINT:
@@ -36,18 +74,21 @@ LRESULT CALLBACK WindowProc(
     cxChar = tm.tmAveCharWidth;
     cxCaps = (tm.tmPitchAndFamily & 1 ? 3 : 2) * cxChar / 2;
     cyChar = tm.tmHeight + tm.tmExternalLeading;
+    int y;
 
-    for(int i = 0; i < cyClient / cyChar/*NUMLINES*/; ++i)
+    for(int i = 0; i < NUMLINES; ++i)
     {
-      TextOut(hdc, 0, cyChar * i, sysmetrics[i].szLabel, wcslen(sysmetrics[i].szLabel));
-      TextOut(hdc, 22 * cxCaps, cyChar * i, sysmetrics[i].szDesc, wcslen(sysmetrics[i].szDesc));
+      y = cyChar * (i - vScrollPos);
+
+      TextOut(hdc, 0, y, sysmetrics[i].szLabel, wcslen(sysmetrics[i].szLabel));
+      TextOut(hdc, 22 * cxCaps, y, sysmetrics[i].szDesc, wcslen(sysmetrics[i].szDesc));
 
       SetTextAlign(hdc, TA_RIGHT | TA_TOP);
       wchar_t buffer[10];
       try
       {
         int cb = wsprintf(buffer, L"%5d", GetSystemMetrics(sysmetrics[i].iIndex));
-        TextOut(hdc, 22 * cxCaps + 40 * cxChar, cyChar * i, buffer, cb);
+        TextOut(hdc, 22 * cxCaps + 40 * cxChar, y, buffer, cb);
       }
       catch(...)
       {

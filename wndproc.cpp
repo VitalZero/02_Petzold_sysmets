@@ -10,13 +10,17 @@ LRESULT CALLBACK WindowProc(
   static int cxChar;
   static int cxCaps;
   static int cyChar;
+  static int cxClient;
+  static int cyClient;
 
   switch(msg)
   {
   case WM_CREATE:
     break;
 
-  case WM_COMMAND:
+  case WM_SIZE:
+    cxClient = LOWORD(lparam);
+    cyClient = HIWORD(lparam);
     break;
 
   case WM_CTLCOLORSTATIC:
@@ -33,15 +37,22 @@ LRESULT CALLBACK WindowProc(
     cxCaps = (tm.tmPitchAndFamily & 1 ? 3 : 2) * cxChar / 2;
     cyChar = tm.tmHeight + tm.tmExternalLeading;
 
-    for(int i = 0; i < NUMLINES; ++i)
+    for(int i = 0; i < cyClient / cyChar/*NUMLINES*/; ++i)
     {
       TextOut(hdc, 0, cyChar * i, sysmetrics[i].szLabel, wcslen(sysmetrics[i].szLabel));
       TextOut(hdc, 22 * cxCaps, cyChar * i, sysmetrics[i].szDesc, wcslen(sysmetrics[i].szDesc));
 
       SetTextAlign(hdc, TA_RIGHT | TA_TOP);
       wchar_t buffer[10];
-      int cb = wsprintf(buffer, L"%5d", GetSystemMetrics(sysmetrics[i].iIndex));
-      TextOut(hdc, 22 * cxCaps + 40 * cxChar, cyChar * i, buffer, cb);
+      try
+      {
+        int cb = wsprintf(buffer, L"%5d", GetSystemMetrics(sysmetrics[i].iIndex));
+        TextOut(hdc, 22 * cxCaps + 40 * cxChar, cyChar * i, buffer, cb);
+      }
+      catch(...)
+      {
+
+      }
       SetTextAlign(hdc, TA_LEFT | TA_TOP);
     }
 

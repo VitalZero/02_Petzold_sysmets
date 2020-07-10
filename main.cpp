@@ -63,8 +63,8 @@ int WINAPI WinMain(
     {
       if(!IsDialogMessage(mainWindow, &msg))
       {
-	TranslateMessage(&msg);
-	DispatchMessage(&msg);
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
       }
     }
   }

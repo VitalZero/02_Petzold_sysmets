@@ -175,6 +175,11 @@ LRESULT CALLBACK WindowProc(
     int y;
     int x;
 
+    HGDIOBJ pen = nullptr;
+    HGDIOBJ oldPen = nullptr;
+    pen = CreatePen(PS_DOT, 1, RGB(0,0,0));
+    oldPen = SelectObject(hdc, pen);
+
     for(int i = iPaintBeg; i <= iPaintEnd; ++i)
     {
       x = cxChar * (1 - iHorzPos);
@@ -188,7 +193,13 @@ LRESULT CALLBACK WindowProc(
       int cb = wsprintf(buffer, L"%5d", GetSystemMetrics(sysmetrics[i].iIndex));
       TextOut(hdc, x + 22 * cxCaps + 40 * cxChar, y, buffer, cb);
       SetTextAlign(hdc, TA_LEFT | TA_TOP);
+      MoveToEx(hdc, 0, y, nullptr);
+      LineTo(hdc, ps.rcPaint.right, y);
     }
+    MoveToEx(hdc, x + 21 * cxCaps, 0, nullptr);
+    LineTo(hdc, x + 21 * cxCaps, ps.rcPaint.bottom);
+    SelectObject(hdc, oldPen);
+    DeleteObject(pen);
 
     EndPaint(hwnd, &ps);
     return 0;
